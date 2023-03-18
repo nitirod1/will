@@ -6,20 +6,40 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 import "./factoryAsset.sol";
 
+interface AssetContract{
+    function newRealAsset(string memory _title,string memory _typeAsset,string memory _fileHash,address _owner)external;
+    function newDigitalAsset(uint256 _id,string memory _title,uint256 _balance,address _owner)external;
+    function getDigitalAssets(address _owner)external view returns (string memory,uint256) ;
+    function deleteDigitalAsset(address _owner , uint256 _delBalance) external;
+    // function getRealAsset(address _owner) public view ;
+}
+
 contract Will is ERC1155, AccessControl, Pausable, ERC1155Supply {
-    FactoryAsset public asset;
-    bool public active = false;
+    AssetContract internal asset;
     uint256 public cost = 1 gwei;
     bytes32 public constant URI_SETTER_ROLE = keccak256("URI_SETTER_ROLE");
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
+    using Counters for Counters.Counter;
+    Counters.Counter private _tokenIds;
 
+    // name of will
+    string internal name;
+
+    // store address to active flag will
+    mapping(address => bool) active;
+    
+    // store token_id to address 
+    mapping(uint256 => address) will;
+
+    // construct connect with address asset 
     constructor(address _addr)
         ERC1155("ipfs://QmbJWAESqCsf4RFCqEY7jecCashj8usXiyDNfKtZCwwzGb")
     {   
-        asset = FactoryAsset(_addr);
+        asset = AssetContract(_addr);
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(URI_SETTER_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
@@ -27,7 +47,7 @@ contract Will is ERC1155, AccessControl, Pausable, ERC1155Supply {
     }
 
     modifier isActive(){
-        require(active == true );
+        require(active[msg.sender] == true );
         _;
     }
 
@@ -43,20 +63,25 @@ contract Will is ERC1155, AccessControl, Pausable, ERC1155Supply {
         _unpause();
     }
 
-    function mintDigital( uint256 id, uint256 _balance)
-        public
-        payable
-    {
-        require(_balance == msg.value,"Wrong ! Not enoght money");
-        asset.newDigitalAsset("",_balance,"",msg.sender);
-        _mint(msg.sender, id, _balance, "");
+    function deposit(uint256 _id)external payable{
+        require(msg.value >= 0 ether,"Wrong ! Not enoght money");
+        asset.newDigitalAsset( _id,"",msg.value,msg.sender);
     }
 
-    function withdraw(address _addr) external isActive{
-        require(active ,"Will not active now ");
+    function withdrawDigital(address from, address to) external isActive{
+        require(active[msg.sender] ,"Will not active now ");
+        (string memory _title,uint256 balance) = asset.getDigitalAssets(from);
 
-        uint256 balance = address(this).balance;
-        payable(_addr).transfer(balance);
+        require(balance >= 0 ether , "didn't have ether in asset");
+        asset.deleteDigitalAsset(msg.sender,balance); 
+        payable(to).transfer(balance);
+    }
+
+    function mintWill( uint256 _id , uint256 _amount)
+        public
+    {
+        require(_amount >= 0,"Wrong ! Amount");
+        _mint(msg.sender, _id, _amount, "");
     }
 
     function uri(uint256 _id)public view virtual override returns(string memory ){
@@ -72,8 +97,8 @@ contract Will is ERC1155, AccessControl, Pausable, ERC1155Supply {
         _mintBatch(to, ids, amounts, data);
     }
 
-    function activeWill() external onlyRole(OWNER_ROLE){
-        active = true;
+    function activeWill(address _adr) external onlyRole(OWNER_ROLE){
+        active[_adr] = true;
     }
 
     function _beforeTokenTransfer(address operator, address from, address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data)
@@ -85,7 +110,6 @@ contract Will is ERC1155, AccessControl, Pausable, ERC1155Supply {
     }
 
     // The following functions are overrides required by Solidity.
-
     function supportsInterface(bytes4 interfaceId)
         public
         view
@@ -95,5 +119,4 @@ contract Will is ERC1155, AccessControl, Pausable, ERC1155Supply {
         return super.supportsInterface(interfaceId);
     }
 
-    
 }

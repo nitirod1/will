@@ -2,6 +2,7 @@ import { HardhatUserConfig } from "hardhat/config";
 import "dotenv/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomiclabs/hardhat-etherscan";
+import { Network, Alchemy } from 'alchemy-sdk';
 
 // Template
 const { SEPOLIA_RPC, PRIVATE_KEY, ETHERSCAN_API } = process.env;
