@@ -79,12 +79,16 @@ contract FactoryAsset{
     //     return tokenIDs[_ownder];
     // }
 
-    function getDigitalAssets(address _owner)public view returns (string memory,uint256) {
-        return (digitalAssets[_owner].title , digitalAssets[_owner].balance);
+    function getDigitalAssets(address _owner)public view returns (uint256,string memory,uint256) {
+        return (digitalAssets[_owner].id,digitalAssets[_owner].title , digitalAssets[_owner].balance);
     }
 
-    function deleteDigitalAsset(address _owner , uint256 _delBalance) external {
+    function delBalance(address _owner , uint256 _delBalance) external {
         digitalAssets[_owner].balance = digitalAssets[_owner].balance - _delBalance;
+    }
+    
+    function delDigitalAsset(string memory _id , address _owner)external{
+        
     }
 
     // function getCountDigtalAsset(address _owner)public view returns (uint256){

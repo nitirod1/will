@@ -12,8 +12,8 @@ import "./factoryAsset.sol";
 interface AssetContract{
     function newRealAsset(string memory _title,string memory _typeAsset,string memory _fileHash,address _owner)external;
     function newDigitalAsset(uint256 _id,string memory _title,uint256 _balance,address _owner)external;
-    function getDigitalAssets(address _owner)external view returns (string memory,uint256) ;
-    function deleteDigitalAsset(address _owner , uint256 _delBalance) external;
+    function getDigitalAssets(address _owner)external view returns (uint256,string memory,uint256) ;
+    function delBalance(address _owner , uint256 _delBalance) external;
     // function getRealAsset(address _owner) public view ;
 }
 
@@ -23,8 +23,11 @@ contract Will is ERC1155, AccessControl, Pausable, ERC1155Supply {
     bytes32 public constant URI_SETTER_ROLE = keccak256("URI_SETTER_ROLE");
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
-    using Counters for Counters.Counter;
-    Counters.Counter private _tokenIds;
+
+    // DIGITAL ASSET 
+    uint256 public constant DIGITAL_ASSET_ETH = 0;
+    // using Counters for Counters.Counter;
+    // Counters.Counter private _tokenIds;
 
     // name of will
     string internal name;
@@ -35,6 +38,8 @@ contract Will is ERC1155, AccessControl, Pausable, ERC1155Supply {
     // store token_id to address 
     mapping(uint256 => address) will;
 
+    // beneficiary 
+    mapping(address => address[]) internal beneficiary;
     // construct connect with address asset 
     constructor(address _addr)
         ERC1155("ipfs://QmbJWAESqCsf4RFCqEY7jecCashj8usXiyDNfKtZCwwzGb")
@@ -67,14 +72,28 @@ contract Will is ERC1155, AccessControl, Pausable, ERC1155Supply {
         require(msg.value >= 0 ether,"Wrong ! Not enoght money");
         asset.newDigitalAsset( _id,"",msg.value,msg.sender);
     }
+    
+    function addBeneficiary(address _addr)external {
+        beneficiary[msg.sender].push(_addr);
+    }
 
+    function getBeneficiary()public view returns(address[] memory){
+        return beneficiary[msg.sender];
+    }
+    
     function withdrawDigital(address from, address to) external isActive{
-        require(active[msg.sender] ,"Will not active now ");
-        (string memory _title,uint256 balance) = asset.getDigitalAssets(from);
+        require(active[from] ,"Will not active now ");
+        (uint256 id,string memory title,uint256 balance) = asset.getDigitalAssets(from);
 
         require(balance >= 0 ether , "didn't have ether in asset");
-        asset.deleteDigitalAsset(msg.sender,balance); 
+        asset.delBalance(from,balance); 
         payable(to).transfer(balance);
+    }
+
+    function mintDigital()public payable{
+        require(msg.value >= 0 ether,"");
+        _mint(msg.sender,DIGITAL_ASSET_ETH,msg.value,"");
+        asset.newDigitalAsset(DIGITAL_ASSET_ETH,"",msg.value,msg.sender);
     }
 
     function mintWill( uint256 _id , uint256 _amount)
