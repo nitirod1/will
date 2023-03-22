@@ -1,141 +1,57 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "./factoryAsset.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-interface AssetContract{
-    function newRealAsset(string memory _title,string memory _typeAsset,string memory _fileHash,address _owner)external;
-    function newDigitalAsset(uint256 _id,string memory _title,uint256 _balance,address _owner)external;
-    function getDigitalAssets(address _owner)external view returns (uint256,string memory,uint256) ;
-    function delBalance(address _owner , uint256 _delBalance) external;
-    // function getRealAsset(address _owner) public view ;
-}
-
-contract Will is ERC1155, AccessControl, Pausable, ERC1155Supply {
-    AssetContract internal asset;
-    uint256 public cost = 1 gwei;
-    bytes32 public constant URI_SETTER_ROLE = keccak256("URI_SETTER_ROLE");
-    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
-    bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
-
-    // DIGITAL ASSET 
-    uint256 public constant DIGITAL_ASSET_ETH = 0;
-    // using Counters for Counters.Counter;
-    // Counters.Counter private _tokenIds;
-
-    // name of will
+contract Will is ERC721, Ownable {
     string internal name;
+    address internal beneficiary ;
+    string internal uri;
+    bool internal active;
 
-    // store address to active flag will
-    mapping(address => bool) active;
-    
-    // store token_id to address 
-    mapping(uint256 => address) will;
+    using Counters for Counters.Counter;
+    Counters.Counter private _tokenIdCounter;
 
-    // beneficiary 
-    mapping(address => address[]) internal beneficiary;
-    // construct connect with address asset 
-    constructor(address _addr)
-        ERC1155("ipfs://QmbJWAESqCsf4RFCqEY7jecCashj8usXiyDNfKtZCwwzGb")
-    {   
-        asset = AssetContract(_addr);
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(URI_SETTER_ROLE, msg.sender);
-        _grantRole(PAUSER_ROLE, msg.sender);
-        _grantRole(OWNER_ROLE, msg.sender);
+    mapping(address => uint256[]) digitalAssetId;
+    mapping(address => uint256[]) realAssetId;
+
+    constructor(
+        string memory _name,
+        address _beneficiary 
+    ) ERC721("King MongKut's University", "KMUTT") {
+        name = _name;
+        beneficiary = _beneficiary;
+        active = false;
     }
 
     modifier isActive(){
-        require(active[msg.sender] == true );
+        require(active == true , "Not active");
         _;
     }
 
-    function setURI(string memory newuri) public onlyRole(URI_SETTER_ROLE) {
-        _setURI(newuri);
+    function safeMint(address to,uint256 tokenId) public onlyOwner {
+        _safeMint(to, tokenId);
     }
 
-    function pause() public onlyRole(PAUSER_ROLE) {
-        _pause();
+    function activeWill() public onlyOwner{
+        active = true;
     }
 
-    function unpause() public onlyRole(PAUSER_ROLE) {
-        _unpause();
-    }
+     function withdrawERC20(
+        address _tokenAddress,
+        uint256 _amount
+    ) external isActive {
+        IERC20Metadata token = IERC20Metadata(_tokenAddress);
 
-    function deposit(uint256 _id)external payable{
-        require(msg.value >= 0 ether,"Wrong ! Not enoght money");
-        asset.newDigitalAsset( _id,"",msg.value,msg.sender);
-    }
-    
-    function addBeneficiary(address _addr)external {
-        beneficiary[msg.sender].push(_addr);
-    }
+        uint256 balance = token.balanceOf(address(this));
 
-    function getBeneficiary()public view returns(address[] memory){
-        return beneficiary[msg.sender];
-    }
-    
-    function withdrawDigital(address from, address to) external isActive{
-        require(active[from] ,"Will not active now ");
-        (uint256 id,string memory title,uint256 balance) = asset.getDigitalAssets(from);
+        require(balance >= _amount, "Not Enought Balance !");
 
-        require(balance >= 0 ether , "didn't have ether in asset");
-        asset.delBalance(from,balance); 
-        payable(to).transfer(balance);
-    }
+        token.transfer(beneficiary, _amount);
 
-    function mintDigital()public payable{
-        require(msg.value >= 0 ether,"");
-        _mint(msg.sender,DIGITAL_ASSET_ETH,msg.value,"");
-        asset.newDigitalAsset(DIGITAL_ASSET_ETH,"",msg.value,msg.sender);
-    }
-
-    function mintWill( uint256 _id , uint256 _amount)
-        public
-    {
-        require(_amount >= 0,"Wrong ! Amount");
-        _mint(msg.sender, _id, _amount, "");
-    }
-
-    function uri(uint256 _id)public view virtual override returns(string memory ){
-        require(exists(_id),"URI: nonexistent token");
-
-        return string(abi.encodePacked(super.uri(_id),Strings.toString(_id),".json"));
-    }
-
-    function mintBatch(address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data)
-        public
-        onlyRole(OWNER_ROLE)
-    {
-        _mintBatch(to, ids, amounts, data);
-    }
-
-    function activeWill(address _adr) external onlyRole(OWNER_ROLE){
-        active[_adr] = true;
-    }
-
-    function _beforeTokenTransfer(address operator, address from, address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data)
-        internal
-        whenNotPaused
-        override(ERC1155, ERC1155Supply)
-    {
-        super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
-    }
-
-    // The following functions are overrides required by Solidity.
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC1155, AccessControl)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
     }
 
 }

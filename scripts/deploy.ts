@@ -3,20 +3,20 @@ import hre from "hardhat";
 import jsonFile from "jsonfile";
 
 async function main() {
-  const asset = await ethers.getContractFactory("FactoryAsset");
-  const will = await ethers.getContractFactory("Will");
-  const assetContract = await asset.deploy();
-  await assetContract.deployed();
-  console.log("asset deployed to:", assetContract.address);
+  const willFactory = await ethers.getContractFactory("willFactory");
+  const willFactoryContract = await willFactory.deploy();
+  await willFactoryContract.deployed();
+  console.log("willFactory deployed to:", willFactoryContract.address);
 
-  const willContract = await will.deploy(assetContract.address);
-  await willContract.deployed();
-  console.log("will deployed to:", willContract.address);
+  // const will = await ethers.getContractFactory("Will");
+  // const willContract = await will.deploy(assetContract.address);
+  // await willContract.deployed();
+  // console.log("will deployed to:", willContract.address);
 
-  jsonFile.writeFileSync("config.json", {
-    asset: assetContract.address,
-    will:willContract.address
-  });
+  // jsonFile.writeFileSync("config.json", {
+  //   asset: assetContract.address,
+  //   will:willContract.address
+  // });
 }
 main().catch((error) => {
   console.error(error);
