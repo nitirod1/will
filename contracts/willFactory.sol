@@ -18,7 +18,7 @@ contract willFactory{
     address _beneficiary 
     )public{
         // create new will
-        Will will = new Will(_name,_owner,_beneficiary);
+        Will will = new Will(_name,_beneficiary);
 
         wills[_owner].push(address(will));
 
