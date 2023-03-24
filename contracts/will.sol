@@ -6,17 +6,23 @@ contract Will {
     address internal owner;
     address internal beneficiary ;
 
-    mapping(address => uint256[]) digitalAssetId;
-    mapping(address => uint256[]) realAssetId;
-
     constructor(
         uint256 _tokenId,
-        address _owner , 
-        address _beneficiary 
+        address _owner 
     ) {
         owner = _owner;
         tokenId = _tokenId;
+    }
+    modifier isOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function setBeneficiary(address _beneficiary) external isOwner{
         beneficiary = _beneficiary;
     }
 
+    function getBeneficiary()public view returns(address){
+        return beneficiary;
+    }
 }

@@ -36,11 +36,10 @@ contract willFactory is ERC721, AccessControl {
 
     function newWill(
     uint256 _tokenId,
-    address _owner , 
-    address _beneficiary 
+    address _owner 
     )public onlyRole(OWNER_ROLE){
         // create new will
-        Will will = new Will(_tokenId,_owner,_beneficiary);
+        Will will = new Will(_tokenId,_owner);
 
         owner[address(will)] = _owner;
 
