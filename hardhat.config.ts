@@ -5,7 +5,7 @@ import "@nomiclabs/hardhat-etherscan";
 import { Network, Alchemy } from 'alchemy-sdk';
 
 // Template
-const { SEPOLIA_RPC, PRIVATE_KEY, ETHERSCAN_API } = process.env;
+const {GOERLI_RPC, SEPOLIA_RPC, PRIVATE_KEY, ETHERSCAN_API } = process.env;
 
 const config: HardhatUserConfig = {
   networks: {
@@ -13,6 +13,7 @@ const config: HardhatUserConfig = {
       url: SEPOLIA_RPC || "",
       accounts: [PRIVATE_KEY as string],
     },
+    
   },
   etherscan: {
     apiKey: {
