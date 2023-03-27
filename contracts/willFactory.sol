@@ -16,6 +16,8 @@ contract willFactory is ERC721, AccessControl {
     // tokenId of will
     mapping(uint256 => address) public tokenIds;
 
+    mapping(address => uint256) public idCards;
+
     address private activeWallet = 0x37613520fe0207B701f990F4634bfd0F08A90e78 ;
 
     string public baseURI;
@@ -35,6 +37,14 @@ contract willFactory is ERC721, AccessControl {
         _grantRole(ACTIVE_ROLE,activeWallet);
     }
 
+    function registerIdCard(uint256 _idCard)external {
+        idCards[msg.sender] = _idCard;
+    }
+
+    function getIdCard()public view returns(uint256){
+        return idCards[msg.sender];
+    }
+
     function setStatusWill(address _adrWill)external onlyRole(ACTIVE_ROLE){
         wills[_adrWill] = true;
     }
@@ -47,10 +57,10 @@ contract willFactory is ERC721, AccessControl {
         return owner[_adrWill];
     }
 
-    function safeMint(address to ,string memory _name ,uint256 _idCard) public payable{
+    function safeMint(address to ,string memory _name ) public payable{
         require(msg.value >=0 , "balance not enough");
         uint256 tokenId = _tokenIdCounter.current();
-        Will will = new Will(_name,_idCard,tokenId,to , msg.value );
+        Will will = new Will(_name,idCards[to],tokenId,to , msg.value );
         owner[address(will)] = to;
         wills[address(will)] = false;
         tokenIds[tokenId] = address(will);
