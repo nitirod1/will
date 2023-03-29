@@ -31,7 +31,7 @@ contract willFactory is ERC721, AccessControl {
 
     bytes32 private constant ACTIVE_ROLE = keccak256("ACTIVE_ROLE");
 
-    constructor() ERC721("MyToken", "MTK") {
+    constructor() ERC721("Will-Chain", "will") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(OWNER_ROLE, msg.sender);
         _grantRole(ACTIVE_ROLE,activeWallet);
