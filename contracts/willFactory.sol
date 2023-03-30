@@ -9,15 +9,16 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 
 contract willFactory is ERC721, AccessControl {
-    // owner of will
+    // mapping address wallet contract to addess will contract
     mapping(address => address) public owner;
-    // status of will
-    mapping(address => bool) public wills;
-    // tokenId of will
-    mapping(uint256 => address) public tokenIds;
 
+    // mapping address will contract to status will
+    mapping(address => bool) public wills;
+
+    // mapping address wallet to idcard
     mapping(address => uint256) public idCards;
 
+    // address for permission active will on
     address private activeWallet = 0x37613520fe0207B701f990F4634bfd0F08A90e78 ;
 
     string public baseURI;
@@ -27,14 +28,28 @@ contract willFactory is ERC721, AccessControl {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIdCounter;
 
-    bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
-
     bytes32 private constant ACTIVE_ROLE = keccak256("ACTIVE_ROLE");
 
     constructor() ERC721("Will-Chain", "will") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(OWNER_ROLE, msg.sender);
         _grantRole(ACTIVE_ROLE,activeWallet);
+    }
+
+    event NewWill(address will , address owner );
+    event InheritWill(address contractWill,address by, address to, uint256 tokenId);
+
+    function newWill(
+        address _owner,
+        string memory _name ,
+        string memory _description
+        ) external{
+        uint256 tokenId = _tokenIdCounter.current();
+        _safeMint(_owner, tokenId);
+        Will will = new Will(_owner,_name , _description,tokenId  );
+        owner[_owner] =  address(will);
+        wills[address(will)] = false;
+        _tokenIdCounter.increment();
+        emit NewWill(address(will), _owner);
     }
 
     function registerIdCard(uint256 _idCard)external {
@@ -45,33 +60,19 @@ contract willFactory is ERC721, AccessControl {
         return idCards[msg.sender];
     }
 
-    function setStatusWill(address _adrWill)external onlyRole(ACTIVE_ROLE){
-        wills[_adrWill] = true;
-    }
-
     function getStatusWill(address _adrWill ) public view returns(bool){
         return wills[_adrWill];
     }
 
-    function getOwner(address _adrWill) public view returns(address){
-        return owner[_adrWill];
-    }
-
-    function safeMint(address to ,string memory _name ) public payable{
-        require(msg.value >=0 , "balance not enough");
-        uint256 tokenId = _tokenIdCounter.current();
-        Will will = new Will(_name,idCards[to],tokenId,to , msg.value );
-        owner[address(will)] = to;
-        wills[address(will)] = false;
-        tokenIds[tokenId] = address(will);
-        _safeMint(to, tokenId);
-        _grantRole(OWNER_ROLE,msg.sender);
-        _tokenIdCounter.increment();
+    function getWillContract(address _owner) public view returns(address){
+        return owner[_owner];
     }
 
     function inheritWill(address from, address to, uint256 tokenId,address _adrWill) external {
-        require(wills[_adrWill] == true , "will not active now");
+        require(hasRole(ACTIVE_ROLE, msg.sender), "Caller is not Active role");
+        wills[_adrWill] = true;
         transferFrom(from,to,tokenId);
+        emit InheritWill(_adrWill,from,to,tokenId);
     }
 
     // The following functions are overrides required by Solidity.
