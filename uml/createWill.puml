@@ -1,0 +1,15 @@
+@startuml
+actor User 
+
+User -> Frontend : Create Will
+Frontend -> WillFactoryContract: Mint NFT Will
+WillFactoryContract -> WillContract : Create contract
+User -> Frontend : Click Digital Asset
+Frontend -> WillContract : Add Digital Asset (cryptocurrency)
+User -> Frontend : Click Real Asset
+Frontend -> The InterPlanetary File System (IPFS): Upload File Asset
+The InterPlanetary File System (IPFS) --> Frontend : response 
+Frontend -> WillContract : 
+
+
+@enduml
