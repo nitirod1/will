@@ -8,13 +8,7 @@ REPORT_GAS=true npx hardhat test
 npx hardhat node
 npx hardhat run scripts/deploy.ts
 ```
-<style>
-    img {
-        width: 50%;
-        height: auto
-    }
-</style>
-<img src= "./out/uml/createWill/createWill.png" />
+<img src= "./out/uml/createWill/createWill.png" width = 50% height = auto />
 
 =======
 
