@@ -3,13 +3,24 @@ actor User
 
 User -> Frontend : Create Will
 Frontend -> WillFactoryContract: Mint NFT Will
-WillFactoryContract -> WillContract : Create contract
+WillFactoryContract -> WillContract : Create Contract
+WillContract --> WillFactoryContract : Response Contract Created Success
+WillFactoryContract --> Frontend : Response TokenID 
+Frontend --> User : Response Will Contract Address
 User -> Frontend : Click Digital Asset
-Frontend -> WillContract : Add Digital Asset (cryptocurrency)
+Frontend -> WillContract : Deposit Digital Asset (cryptocurrency)
+WillContract --> Frontend : Response Deposit Success
+Frontend --> User : Response Digital Value Success
 User -> Frontend : Click Real Asset
-Frontend -> The InterPlanetary File System (IPFS): Upload File Asset
-The InterPlanetary File System (IPFS) --> Frontend : response 
-Frontend -> WillContract : 
+Frontend -> IPFS: Upload File Asset
+IPFS --> Frontend : Response String Hash File
+Frontend -> WillContract : Add Real Asset Hash Path File 
+WillContract --> Frontend : Response Add Real Asset Success
+Frontend --> User : Response Real Asset Success
+User -> Frontend : Click Add Beneficiary
+Frontend -> WillContract : Add Beneficiary
+WillContract --> Frontend : Grant Role Beneficiary
+Frontend --> User: Response Add Beneficiary Success
 
 
 @enduml
