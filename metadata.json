@@ -1,0 +1,13 @@
+{
+    "name": "name",
+    "description": "", 
+    "external_url": "https://openseacreatures.io/3", 
+    "image": "https://storage.googleapis.com/opensea-prod.appspot.com/puffs/3.png", 
+    "claims_contract":"contract_address",
+    "attributes": [
+        {
+            "trait_type": "trait_type",
+            "value": "value"
+        }
+    ]
+  }

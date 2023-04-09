@@ -1,0 +1,18 @@
+@startuml
+actor User
+
+User -> Frontend : Click Digital Asset
+Frontend --> User : Select Token Address
+User -> Frontend : input amount for approve token
+Frontend -> WillContract : Approve Amount Token For Deposit
+WillContract -> AnyTokenContract : Call Function Approve Token
+AnyTokenContract --> WillContract : Response Approve Token For Deposit On WillContract
+WillContract --> Frontend : Approve Successfully
+Frontend --> User : Approve Successfully
+Frontend -> WillContract : Deposit Digital Asset (cryptocurrency)
+WillContract -> AnyTokenContract : Call Function Transfer Token To WillContract
+AnyTokenContract --> WillContract : Response Transfer Token To WillContract
+WillContract --> Frontend : Response Deposit Success
+Frontend --> User : Response Digital Value Success
+
+@enduml

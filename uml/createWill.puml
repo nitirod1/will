@@ -3,6 +3,10 @@ actor User
 
 User -> Frontend : Create Will
 Frontend -> WillFactoryContract: Mint NFT Will
+WillFactoryContract -> WillTokenContract : Create NFT Will
+WillTokenContract -> Metamask : Mint NFT To User
+Metamask --> WillTokenContract : Response Confirm Transaction Success
+WillTokenContract --> WillFactoryContract : Mint NFT Success
 WillFactoryContract -> WillContract : Create Contract
 WillContract --> WillFactoryContract : Response Contract Created Success
 WillFactoryContract --> Frontend : Response TokenID 

@@ -7,7 +7,6 @@ import "./interfaces/IERC20MetaData.sol";
 contract Will is AccessControl {
     string internal name;
     string internal description;
-    // uint256 internal tokenId;
     address internal owner;
     address internal beneficiary;
 
@@ -54,27 +53,15 @@ contract Will is AccessControl {
         return IERC20MetaData(_tokenAddress).balanceOf(address(this));
     }
 
-    function getBalanceSender(address _tokenAddress) public view returns (uint256) {
-        return IERC20MetaData(_tokenAddress).balanceOf(msg.sender);
-    }
-
     function depositBalance(
         address _tokenAddress , 
         uint256 _amount 
         ) external payable onlyRole(OWNER_ROLE) {
         IERC20MetaData token = IERC20MetaData(_tokenAddress);
-        // uint256 balance =  token.balanceOf(msg.sender);
-        // require(balance >= _amount, "balance must be positive");
+        uint256 balance =  token.balanceOf(msg.sender);
+        require(balance >= _amount, "balance must be positive");
         token.transferFrom(msg.sender ,address(this),_amount);
         emit DepositBalance(msg.sender,_amount);
-    }
-
-    function approveContract(
-        address _tokenAddress,
-        uint256 _amount
-    ) external onlyRole(OWNER_ROLE) {
-        IERC20MetaData token = IERC20MetaData(_tokenAddress);
-        token.approve(address(this),_amount);
     }
 
     function withdrawBalance(
@@ -84,10 +71,10 @@ contract Will is AccessControl {
     ) external onlyRole(BENEFICIARY_ROLE) {
         //edit
         IERC20MetaData token = IERC20MetaData(_tokenAddress);
-        // uint256 balance =  token.balanceOf(_to);
-        // require(balance >= _amount, "balance must be positive");
+        uint256 balance =  token.balanceOf(address(this));
+        require(balance >= _amount, "balance must be positive");
         token.transfer(_to,_amount);
-        emit WithdrewBalance(_tokenAddress, msg.sender, _to, _amount);
+        emit WithdrewBalance(_tokenAddress, address(this), _to, _amount);
     }
 
     receive() external payable {

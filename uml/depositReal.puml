@@ -1,0 +1,12 @@
+@startuml
+actor User 
+
+User -> Frontend : Click Real Asset
+Frontend -> IPFS: Upload File Metadata Asset
+IPFS --> Frontend : Response Path directory
+Frontend -> WillContract : Add Real Asset  
+WillContract -> RealToken : Mint NFT Real Asset
+RealToken --> WillContract : Send NFT To Will Contract
+WillContract --> Frontend : Response Add Asset Success
+Frontend --> User : Response Success
+@enduml

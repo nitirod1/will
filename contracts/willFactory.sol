@@ -41,7 +41,7 @@ contract WillFactory {
         string memory _name,
         string memory _description
     ) external {
-        // require(idCards[msg.sender] != 0, "You must register ID card first.");
+        require(idCards[msg.sender] != 0, "You must register ID card first.");
         IWillToken(willToken).mint(msg.sender);
         Will will = new Will(msg.sender, _name, _description);
         willOwners[msg.sender] = address(will);
