@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.19;
 
-interface IWillToken {
+interface IRealToken {
     function mint(address _to) external;
 
     function tokenURI(uint256 _tokenId) external view returns (string memory);

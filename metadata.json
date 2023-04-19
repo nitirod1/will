@@ -6,8 +6,7 @@
     "claims_contract":"contract_address",
     "attributes": [
         {
-            "trait_type": "trait_type",
-            "value": "value"
+            
         }
     ]
   }

@@ -8,12 +8,10 @@ contract WillFactory {
     address internal OWNER;
     address internal willToken;
 
-    modifier onlyOwner() {
-        require(msg.sender == OWNER, "Only owner can call this function.");
-        _;
-    }
-
-    mapping(address => address) public willOwners;
+    //address owner of will willowners[1] = contract is 2
+    // willowners[1] = contract 2 ....
+    // contract -> contract จัดการพินัยกรรม 
+    mapping(address => address[]) public willOwners;
     mapping(address => bool) public wills;
     mapping(address => uint256) public idCards;
 
@@ -24,7 +22,7 @@ contract WillFactory {
         OWNER = msg.sender;
     }
 
-    function getWillOnwer()public view returns(address) {
+    function getWillOnwer(address _owner)public view returns(address[] memory) {
         return willOwners[msg.sender];
     }
 
@@ -37,15 +35,15 @@ contract WillFactory {
         return idCards[_owner];
     }
 
+    // create will 2 รอบ -> design 
+    // manage asset -> manage asset -> manage asset ยังไงวะ
     function createWill(
         string memory _name,
         string memory _description
     ) external {
         require(idCards[msg.sender] != 0, "You must register ID card first.");
-        IWillToken(willToken).mint(msg.sender);
         Will will = new Will(msg.sender, _name, _description);
-        willOwners[msg.sender] = address(will);
-        wills[address(will)] = true;
+        willOwners[msg.sender].push(address(will));
     }
 
     function setWillToken(address _will_token) external onlyOwner {
