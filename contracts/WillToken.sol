@@ -1,17 +1,16 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 
-contract WillToken is ERC721, AccessControl, Ownable {
+contract WillToken is ERC721, ERC721Burnable, AccessControl  {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIdCounter;
-    bytes32 public constant Controller = keccak256("Controller");
+    bytes32 internal constant Controller = keccak256("Controller");
 
     string public baseURI;
 
@@ -22,9 +21,12 @@ contract WillToken is ERC721, AccessControl, Ownable {
         _grantRole(Controller, _willFactory);
     }
 
-    function mint(address _to) public onlyRole(Controller) {
+    function mint(address _to,address _contract) external onlyRole(Controller) returns(uint256)  {
         uint256 tokenId = _tokenIdCounter.current();
+        _tokenIdCounter.increment();
         _safeMint(_to, tokenId);
+        setApprovalForAll(_contract, true);
+        return tokenId;
     }
 
     function tokenURI(

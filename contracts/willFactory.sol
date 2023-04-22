@@ -1,32 +1,38 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.19;
 
-import "./interfaces/IWillToken.sol";
+import "./WillToken.sol";
 import "./Will.sol";
 
 contract WillFactory {
-    address internal OWNER;
+    address internal CONTROLLER;
     address internal willToken;
 
     //address owner of will willowners[1] = contract is 2
     // willowners[1] = contract 2 ....
     // contract -> contract จัดการพินัยกรรม 
     mapping(address => address[]) public willOwners;
-    mapping(address => bool) public wills;
+    //will address is token id
+    mapping(address => uint256) tokenIdOfWill;
     mapping(address => uint256) public idCards;
 
     event CreateWill(address _will, address _owner);
     event RegisterIdCard(address _owner, uint256 _idCard);
 
     constructor() {
-        OWNER = msg.sender;
+        CONTROLLER = msg.sender;
     }
 
-    function getWillOnwer(address _owner)public view returns(address[] memory) {
+    modifier onlyController{
+        require(msg.sender == CONTROLLER, "you are not controller ");
+        _;
+    }
+
+    function getWillOnwer()public view returns(address[] memory) {
         return willOwners[msg.sender];
     }
 
-    function registerIDCard(uint256 _idCard) external onlyOwner {
+    function registerIDCard(uint256 _idCard) external {
         idCards[msg.sender] = _idCard;
         emit RegisterIdCard(msg.sender, _idCard);
     }
@@ -35,18 +41,26 @@ contract WillFactory {
         return idCards[_owner];
     }
 
-    // create will 2 รอบ -> design 
-    // manage asset -> manage asset -> manage asset ยังไงวะ
     function createWill(
         string memory _name,
         string memory _description
     ) external {
         require(idCards[msg.sender] != 0, "You must register ID card first.");
-        Will will = new Will(msg.sender, _name, _description);
+        require(willToken != address(0),"address will token unset now !");
+        Will will = new Will(msg.sender ,willToken, _name, _description);
+        uint256 tokendId= WillToken(willToken).mint(msg.sender, address(will));
+        tokenIdOfWill[address(will)] = tokendId;
         willOwners[msg.sender].push(address(will));
     }
 
-    function setWillToken(address _will_token) external onlyOwner {
-        willToken = _will_token;
+    function claimWill(address _willContract )external onlyController{
+        address beneficiary = Will(_willContract).getBeneficiary();
+        address owner = Will(_willContract).getOwner();
+        require(beneficiary != address(0)  && owner!=address(0),"address beneficiary or owner not correctly registered");
+        IERC721(willToken).safeTransferFrom(owner, beneficiary, tokenIdOfWill[_willContract], "");
+    }
+
+    function setWillToken(address _willToken) external onlyController{
+        willToken = _willToken;
     }
 }
