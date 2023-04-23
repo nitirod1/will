@@ -1,18 +1,17 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 
-contract RealToken is ERC721, AccessControl, Ownable {
+contract RealToken is ERC721, AccessControl {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIdCounter;
     bytes32 public constant Controller = keccak256("Owner");
-
+    address internal will;
     string public baseURI;
 
     string internal baseExtension = ".json";
@@ -20,11 +19,14 @@ contract RealToken is ERC721, AccessControl, Ownable {
     constructor(address _will) ERC721("Real Asset Token", "REAL") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(Controller, _will);
+        will = _will;
     }
 
-    function mint(address _to) public onlyRole(Controller) {
+    function mint(address _to) external onlyRole(Controller) {
         uint256 tokenId = _tokenIdCounter.current();
+        _tokenIdCounter.increment();
         _safeMint(_to, tokenId);
+        setApprovalForAll(will, true);
     }
 
     function tokenURI(
