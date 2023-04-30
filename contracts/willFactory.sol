@@ -7,13 +7,10 @@ import "./Will.sol";
 contract WillFactory {
     address internal CONTROLLER;
     address internal willToken;
+    address internal realToken;
 
-    //address owner of will willowners[1] = contract is 2
-    // willowners[1] = contract 2 ....
-    // contract -> contract จัดการพินัยกรรม 
     mapping(address => address[]) public willOwners;
-    //will address is token id
-    mapping(address => uint256) tokenIdOfWill;
+    mapping(address => uint256) tokendIdOfWill;
     mapping(address => uint256) public idCards;
 
     event CreateWill(address _will, address _owner);
@@ -28,8 +25,12 @@ contract WillFactory {
         _;
     }
 
-    function getWillOnwer()public view returns(address[] memory) {
-        return willOwners[msg.sender];
+    function getTokendIdOfWill(address _will) public view returns(uint256) {
+        return tokendIdOfWill[_will];
+    }
+
+    function getWillOnwer(address _owner)public view returns(address[] memory) {
+        return willOwners[_owner];
     }
 
     function registerIDCard(uint256 _idCard) external {
@@ -41,23 +42,28 @@ contract WillFactory {
         return idCards[_owner];
     }
 
+    // createwil -> mint nft -> approve will contract -> metamask approved 
     function createWill(
         string memory _name,
         string memory _description
     ) external {
         require(idCards[msg.sender] != 0, "You must register ID card first.");
         require(willToken != address(0),"address will token unset now !");
-        Will will = new Will(msg.sender ,willToken, _name, _description);
-        uint256 tokendId= WillToken(willToken).mint(msg.sender, address(will));
-        tokenIdOfWill[address(will)] = tokendId;
+        Will will = new Will(msg.sender , willToken , realToken, _name, _description);
+        uint256 tokendId = WillToken(willToken).mintWill(address(will));
+        tokendIdOfWill[address(will)] = tokendId;
         willOwners[msg.sender].push(address(will));
     }
 
-    function claimWill(address _willContract )external onlyController{
+    function claimWill(address _willContract )external{
         address beneficiary = Will(_willContract).getBeneficiary();
         address owner = Will(_willContract).getOwner();
         require(beneficiary != address(0)  && owner!=address(0),"address beneficiary or owner not correctly registered");
-        IERC721(willToken).safeTransferFrom(owner, beneficiary, tokenIdOfWill[_willContract], "");
+        WillToken(willToken).safeTransferFrom(owner, beneficiary, tokendIdOfWill[_willContract], "");
+    }
+
+    function setRealToken(address _realToken) external onlyController{
+        realToken = _realToken;
     }
 
     function setWillToken(address _willToken) external onlyController{

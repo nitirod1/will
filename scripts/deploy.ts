@@ -9,12 +9,16 @@ async function main() {
   const willToken = await ethers.getContractFactory("WillToken");
   const willTokenContract = await willToken.deploy(willFactoryContract.address);
   await willTokenContract.deployed();
+  const realToken = await ethers.getContractFactory("RealToken");
+  const realTokenContract = await realToken.deploy();
+  await realTokenContract.deployed();
   const USDt = await ethers.getContractFactory("USDt");
   const USDtContract = await USDt.deploy();
   await USDtContract.deployed();
   console.log("willFactory deployed to:", willFactoryContract.address);
   console.log("willToken deployed to:", willTokenContract.address);
   console.log("USDt deployed to:", USDtContract.address);
+  console.log("RealToken deployed to:", realTokenContract.address);
   // const will = await ethers.getContractFactory("Will");
   // const willContract = await will.deploy(assetContract.address);
   // await willContract.deployed();

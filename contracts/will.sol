@@ -3,28 +3,28 @@ pragma solidity 0.8.19;
 
 import "./interfaces/IERC20MetaData.sol";
 import "./RealToken.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "./WillToken.sol";
 
 contract Will {
     string internal name;
     string internal description;
     address internal owner;
     address internal beneficiary;
-    address internal uriRealToken;
-    address internal willTokenContract;
-    RealToken internal realToken;
+    address internal realToken;
+    address internal willToken;
 
     constructor(
         address _owner,
-        address _willTokenContract,
+        address _willToken,
+        address _realToken,
         string memory _name,
         string memory _description 
     ) {
-        willTokenContract = _willTokenContract;
+        willToken = _willToken;
+        realToken =_realToken;
         name = _name;
         description = _description;
         owner = _owner;
-        realToken = new RealToken(address(this));
     }
 
     event Receive(uint256);
@@ -52,16 +52,20 @@ contract Will {
         _;
     }
 
+    function getRealTokenAddress() external view returns(address){
+        return realToken;
+    }
+
     function getBeneficiary()public view returns(address){
         return beneficiary;
     }
-    
+
     function getOwner() public view returns (address) {
         return owner;
     }
 
-    function getRealTokenAddress()public view allowAssets returns(address){
-        return address(realToken);
+    function setBeneficiary(address _beneficiary) external onlyOwner{
+        beneficiary =_beneficiary;
     }
 
     function getBalance(address _tokenAddress) public view returns (uint256) {
@@ -69,14 +73,14 @@ contract Will {
     }
 
     function depositRealAsset()external onlyOwner{
-        realToken.mint(owner);
+        RealToken(realToken).mint(msg.sender);
     }
 
     function withdrawRealAsset(uint256 _tokenId,uint256 _willTokenId)external allowAssets{
-        address ownerWill  = IERC721(willTokenContract).ownerOf(_willTokenId);
+        address ownerWill  = WillToken(willToken).ownerOf(_willTokenId);
         require( msg.sender == ownerWill , "will token not active" );
         require(beneficiary != address(0)  && owner!=address(0),"address beneficiary or owner not correctly registered");
-        realToken.safeTransferFrom(owner, beneficiary, _tokenId);
+        RealToken(realToken).safeTransferFrom(owner, beneficiary, _tokenId);
     }
 
     function depositBalance(
@@ -92,24 +96,17 @@ contract Will {
 
     function withdrawBalance(
         address _tokenAddress,
-        address _to,
         uint256 _amount,
         uint256 _willTokenId
     ) external allowAssets {
-        address ownerWill  = IERC721(willTokenContract).ownerOf(_willTokenId);
+        // check nft this tokenid 
+        // mint nft -> token , contract can mange token -> approve(spender , tokenid ) for erc 721 this contract
+        address ownerWill  = WillToken(willToken).ownerOf(_willTokenId);
         require( msg.sender == ownerWill , "will token not active" );
         IERC20MetaData token = IERC20MetaData(_tokenAddress);
         require(token.balanceOf(address(this)) >= _amount, "balance must be positive");
-        token.transfer(_to,_amount);
-        emit WithdrewBalance(_tokenAddress, address(this), _to, _amount);
+        token.transfer(beneficiary,_amount);
+        emit WithdrewBalance(_tokenAddress, address(this), beneficiary, _amount);
     }
 
-    receive() external payable {
-        // React to receiving ether
-        emit Receive(msg.value);
-    }
-
-    // function setURIRealToken(address _uriRealToken) external onlyOwner {
-    //     uriRealToken = _uriRealToken;
-    // }
 }

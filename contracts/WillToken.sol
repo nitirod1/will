@@ -10,8 +10,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 contract WillToken is ERC721, ERC721Burnable, AccessControl  {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIdCounter;
-    bytes32 internal constant Controller = keccak256("Controller");
-
+    bytes32 public constant Controller = keccak256("Controller");
     string public baseURI;
 
     string internal baseExtension = ".json";
@@ -21,11 +20,10 @@ contract WillToken is ERC721, ERC721Burnable, AccessControl  {
         _grantRole(Controller, _willFactory);
     }
 
-    function mint(address _to,address _contract) external onlyRole(Controller) returns(uint256)  {
+    function mintWill(address _to) external onlyRole(Controller) returns(uint256)  {
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(_to, tokenId);
-        setApprovalForAll(_contract, true);
         return tokenId;
     }
 

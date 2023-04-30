@@ -1,38 +1,41 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 
-contract RealToken is ERC721, AccessControl {
+contract RealToken is ERC721,ERC721Burnable {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIdCounter;
-    bytes32 public constant Controller = keccak256("Owner");
-    address internal will;
+    address internal admin ; 
     string public baseURI;
 
     string internal baseExtension = ".json";
 
-    constructor(address _will) ERC721("Real Asset Token", "REAL") {
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(Controller, _will);
-        will = _will;
+    mapping(address => address) OwnerWill;
+
+    constructor() ERC721("Real Asset Token", "REAL") {
+        admin = msg.sender;
     }
 
-    function mint(address _to) external onlyRole(Controller) {
+    modifier onlyAdmin(){
+        require(admin != msg.sender,"you are not admin");
+        _;
+    }
+
+    function mint(address _to) external returns(uint256){
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(_to, tokenId);
-        setApprovalForAll(will, true);
+        return tokenId;
     }
 
     function tokenURI(
         uint256 _tokenId
     ) public view virtual override returns (string memory) {
-        require(_exists(_tokenId), "Subtawee: not exist");
+        require(_exists(_tokenId), "this TokenId: not exist");
         string memory currentBaseURI = _baseURI();
         return (
             bytes(currentBaseURI).length > 0
@@ -53,13 +56,13 @@ contract RealToken is ERC721, AccessControl {
 
     function setBaseURI(
         string memory _newBaseURI
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    ) external onlyAdmin {
         baseURI = _newBaseURI;
     }
 
     function supportsInterface(
         bytes4 interfaceId
-    ) public view override(ERC721, AccessControl) returns (bool) {
+    ) public view override(ERC721) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }
