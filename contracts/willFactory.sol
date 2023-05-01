@@ -11,7 +11,6 @@ contract WillFactory {
 
     mapping(address => address[]) public willOwners;
     mapping(address => uint256) tokendIdOfWill;
-    mapping(address => uint256) public idCards;
 
     event CreateWill(address _will, address _owner);
     event RegisterIdCard(address _owner, uint256 _idCard);
@@ -33,24 +32,14 @@ contract WillFactory {
         return willOwners[_owner];
     }
 
-    function registerIDCard(uint256 _idCard) external {
-        idCards[msg.sender] = _idCard;
-        emit RegisterIdCard(msg.sender, _idCard);
-    }
-
-    function getIDCard(address _owner) external view returns (uint256) {
-        return idCards[_owner];
-    }
-
     // createwil -> mint nft -> approve will contract -> metamask approved 
     function createWill(
         string memory _name,
         string memory _description
     ) external {
-        require(idCards[msg.sender] != 0, "You must register ID card first.");
         require(willToken != address(0),"address will token unset now !");
         Will will = new Will(msg.sender , willToken , realToken, _name, _description);
-        uint256 tokendId = WillToken(willToken).mintWill(address(will));
+        uint256 tokendId = WillToken(willToken).mintWill(msg.sender);
         tokendIdOfWill[address(will)] = tokendId;
         willOwners[msg.sender].push(address(will));
     }
@@ -62,8 +51,16 @@ contract WillFactory {
         WillToken(willToken).safeTransferFrom(owner, beneficiary, tokendIdOfWill[_willContract], "");
     }
 
+    function getRealToken()public view returns(address){
+        return realToken;
+    }
+
     function setRealToken(address _realToken) external onlyController{
         realToken = _realToken;
+    }
+    
+    function getWillToken()public view returns(address){
+        return willToken;
     }
 
     function setWillToken(address _willToken) external onlyController{
