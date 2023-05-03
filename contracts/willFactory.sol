@@ -44,7 +44,7 @@ contract WillFactory {
         willOwners[msg.sender].push(address(will));
     }
 
-    function claimWill(address _willContract )external{
+    function claimWill(address _willContract )external onlyController{
         address beneficiary = Will(_willContract).getBeneficiary();
         address owner = Will(_willContract).getOwner();
         require(beneficiary != address(0)  && owner!=address(0),"address beneficiary or owner not correctly registered");

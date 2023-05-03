@@ -13,6 +13,8 @@ contract Will {
     address internal realToken;
     address internal willToken;
 
+    mapping(address => uint256) balance;
+
     constructor(
         address _owner,
         address _willToken,
@@ -52,7 +54,11 @@ contract Will {
         _;
     }
 
-    function getRealTokenAddress() external view returns(address){
+    function getBalance(address _tokenAddress) public view returns(uint256){
+        return balance[_tokenAddress];
+    }
+
+    function getRealTokenAddress() public view returns(address){
         return realToken;
     }
 
@@ -66,10 +72,6 @@ contract Will {
 
     function setBeneficiary(address _beneficiary) external onlyOwner{
         beneficiary =_beneficiary;
-    }
-
-    function getBalance(address _tokenAddress) public view returns (uint256) {
-        return IERC20MetaData(_tokenAddress).balanceOf(address(this));
     }
 
     function depositRealAsset()external onlyOwner{
@@ -91,6 +93,7 @@ contract Will {
         uint256 value =  token.balanceOf(msg.sender);
         require(value >= _amount, "balance not enough ");
         token.transferFrom(msg.sender ,address(this),_amount);
+        balance[_tokenAddress] = balance[_tokenAddress] + _amount;
         emit DepositBalance(msg.sender,_amount);
     }
 
