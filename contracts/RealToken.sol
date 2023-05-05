@@ -14,7 +14,6 @@ contract RealToken is ERC721,ERC721Burnable {
 
     string internal baseExtension = ".json";
 
-    mapping(address => address) OwnerWill;
 
     constructor() ERC721("Real Asset Token", "REAL") {
         admin = msg.sender;

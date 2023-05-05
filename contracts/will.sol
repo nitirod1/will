@@ -8,6 +8,7 @@ import "./WillToken.sol";
 contract Will {
     string internal name;
     string internal description;
+    uint256[] internal realTokenId;
     address internal owner;
     address internal beneficiary;
     address internal realToken;
@@ -58,6 +59,10 @@ contract Will {
         return balance[_tokenAddress];
     }
 
+    function getRealTokenId()public view returns(uint256[] memory){
+        return realTokenId;
+    }
+
     function getRealTokenAddress() public view returns(address){
         return realToken;
     }
@@ -75,7 +80,8 @@ contract Will {
     }
 
     function depositRealAsset()external onlyOwner{
-        RealToken(realToken).mint(msg.sender);
+        uint256 tokenId = RealToken(realToken).mint(msg.sender);
+        realTokenId.push(tokenId);
     }
 
     function withdrawRealAsset(uint256 _tokenId,uint256 _willTokenId)external allowAssets{
