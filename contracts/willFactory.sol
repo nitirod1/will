@@ -6,11 +6,13 @@ import "./Will.sol";
 
 contract WillFactory {
     address internal CONTROLLER;
-    address internal willToken;
-    address internal realToken;
-
-    mapping(address => address[]) public willOwners;
-    mapping(address => uint256) tokendIdOfWill;
+    address internal willTokenAddress;
+    address internal realTokenAddress;
+    // ? uint256 tokenid , ? address (will)
+    // getTokenIdOfWill => will address , getTokenIdOnwer  => array of uint storage tokenid
+    // address(contract) = contract will ? if don't have i can เพิ่มเติมได้
+    mapping(address => uint256[]) internal tokenIdOwner;
+    mapping(uint256 => address) internal tokendIdOfWill;
 
     event CreateWill(address _will, address _owner);
     event RegisterIdCard(address _owner, uint256 _idCard);
@@ -23,13 +25,15 @@ contract WillFactory {
         require(msg.sender == CONTROLLER, "you are not controller ");
         _;
     }
-
-    function getTokendIdOfWill(address _will) public view returns(uint256) {
-        return tokendIdOfWill[_will];
+    // tokenid = address(will)
+    // mint will -> will 1 
+    // verify will ->
+    function getTokendIdOfWill(uint256 _tokendId) public view returns(address) {
+        return tokendIdOfWill[_tokendId];
     }
 
-    function getWillOnwer(address _owner)public view returns(address[] memory) {
-        return willOwners[_owner];
+    function getTokenIdOnwer(address _owner)public view returns(uint256[] memory) {
+        return tokenIdOwner[_owner];
     }
 
     // createwil -> mint nft -> approve will contract -> metamask approved 
@@ -37,33 +41,33 @@ contract WillFactory {
         string memory _name,
         string memory _description
     ) external {
-        require(willToken != address(0),"address will token unset now !");
-        Will will = new Will(msg.sender , willToken , realToken, _name, _description);
-        uint256 tokendId = WillToken(willToken).mintWill(msg.sender);
-        tokendIdOfWill[address(will)] = tokendId;
-        willOwners[msg.sender].push(address(will));
+        require(willTokenAddress != address(0),"address will token unset now !");
+        Will will = new Will(msg.sender , willTokenAddress , realTokenAddress, _name, _description);
+        uint256 tokendId = WillToken(willTokenAddress).mintWill(msg.sender);
+        tokendIdOfWill[tokendId] = address(will);
+        tokenIdOwner[msg.sender].push(tokendId);
     }
 
-    function claimWill(address _willContract )external onlyController{
+    function claimWill(address _willContract , uint256 _tokenId )external {
         address beneficiary = Will(_willContract).getBeneficiary();
         address owner = Will(_willContract).getOwner();
         require(beneficiary != address(0)  && owner!=address(0),"address beneficiary or owner not correctly registered");
-        WillToken(willToken).safeTransferFrom(owner, beneficiary, tokendIdOfWill[_willContract], "");
+        WillToken(willTokenAddress).safeTransferFrom(owner, beneficiary, _tokenId, "");
     }
 
-    function getRealToken()public view returns(address){
-        return realToken;
+    function getRealTokenAddress()public view returns(address){
+        return realTokenAddress;
     }
 
-    function setRealToken(address _realToken) external onlyController{
-        realToken = _realToken;
+    function setRealTokenAddress(address _realTokenAddress) external onlyController{
+        realTokenAddress = _realTokenAddress;
     }
     
-    function getWillToken()public view returns(address){
-        return willToken;
+    function getwillTokenAddress()public view returns(address){
+        return willTokenAddress;
     }
 
-    function setWillToken(address _willToken) external onlyController{
-        willToken = _willToken;
+    function setwillTokenAddress(address _willTokenAddress) external onlyController{
+        willTokenAddress = _willTokenAddress;
     }
 }
