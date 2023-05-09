@@ -10,7 +10,7 @@ async function main() {
   const willTokenContract = await willToken.deploy(willFactoryContract.address);
   await willTokenContract.deployed();
   const realToken = await ethers.getContractFactory("RealToken");
-  const realTokenContract = await realToken.deploy();
+  const realTokenContract = await realToken.deploy(willFactoryContract.address);
   await realTokenContract.deployed();
   const USDt = await ethers.getContractFactory("USDt");
   const USDtContract = await USDt.deploy();

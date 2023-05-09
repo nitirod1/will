@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import "./WillToken.sol";
+import "./RealToken.sol";
 import "./Will.sol";
 
 contract WillFactory {
@@ -36,19 +37,28 @@ contract WillFactory {
         return tokenIdOwner[_owner];
     }
 
-    // createwil -> mint nft -> approve will contract -> metamask approved 
     function createWill(
         string memory _name,
-        string memory _description
+        string memory _description,
+        string memory _uri
     ) external {
         require(willTokenAddress != address(0),"address will token unset now !");
-        Will will = new Will(msg.sender , willTokenAddress , realTokenAddress, _name, _description);
-        uint256 tokendId = WillToken(willTokenAddress).mintWill(msg.sender);
-        tokendIdOfWill[tokendId] = address(will);
-        tokenIdOwner[msg.sender].push(tokendId);
+        uint256 tokenId = WillToken(willTokenAddress).mintWill(msg.sender,_uri);
+        Will will = new Will(msg.sender , willTokenAddress , realTokenAddress,tokenId, _name, _description);
+        RealToken(realTokenAddress).grantRoleContract(address(will));
+        tokendIdOfWill[tokenId] = address(will);
+        tokenIdOwner[msg.sender].push(tokenId);
     }
 
-    function claimWill(address _willContract , uint256 _tokenId )external {
+    // multisig รับผลประโยชน์จาก will ต้องมี
+    // i want decenterized / real life i love but not enoght time to develop
+    // 2 ideas for
+    // verify เรื่อง offline จริง ๆ ที่เขาทำกัน 
+    // เอกสารราชการ
+    // มโน kyc offline
+    // worst case kyc offline
+
+    function claimWill(address _willContract , uint256 _tokenId )external{
         address beneficiary = Will(_willContract).getBeneficiary();
         address owner = Will(_willContract).getOwner();
         require(beneficiary != address(0)  && owner!=address(0),"address beneficiary or owner not correctly registered");
@@ -62,7 +72,7 @@ contract WillFactory {
     function setRealTokenAddress(address _realTokenAddress) external onlyController{
         realTokenAddress = _realTokenAddress;
     }
-    
+
     function getwillTokenAddress()public view returns(address){
         return willTokenAddress;
     }

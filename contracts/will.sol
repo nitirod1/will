@@ -9,17 +9,21 @@ contract Will {
     string internal name;
     string internal description;
     uint256[] internal realTokenId;
+    uint256 internal willTokenId;
     address internal owner;
     address internal beneficiary;
     address internal realToken;
     address internal willToken;
 
     mapping(address => uint256) balance;
+    mapping(uint256 => string) nameRealToken;
+    mapping(uint256 => string) descRealToken;
 
     constructor(
         address _owner,
         address _willToken,
         address _realToken,
+        uint256 _willTokenId,
         string memory _name,
         string memory _description 
     ) {
@@ -28,6 +32,7 @@ contract Will {
         name = _name;
         description = _description;
         owner = _owner;
+        willTokenId = _willTokenId;
     }
 
     event Receive(uint256);
@@ -75,17 +80,28 @@ contract Will {
         return owner;
     }
 
+    function getNameRealToken(uint256 _tokenId)public view returns(string memory){
+        return nameRealToken[_tokenId];
+    }
+
+    function getDescRealToken(uint256 _tokenId)public view returns(string memory){
+        return descRealToken[_tokenId];
+    }
+
     function setBeneficiary(address _beneficiary) external onlyOwner{
         beneficiary =_beneficiary;
     }
 
-    function depositRealAsset()external onlyOwner{
-        uint256 tokenId = RealToken(realToken).mint(msg.sender);
+    //secure real asset note , if transferred realToken ช่องโหว่
+    function depositRealAsset(string memory _name , string memory _description,string memory _uri)external onlyOwner{
+        uint256 tokenId = RealToken(realToken).mint(msg.sender,_uri);
         realTokenId.push(tokenId);
+        nameRealToken[tokenId] = _name;
+        descRealToken[tokenId] = _description;
     }
 
-    function withdrawRealAsset(uint256 _tokenId,uint256 _willTokenId)external allowAssets{
-        address ownerWill  = WillToken(willToken).ownerOf(_willTokenId);
+    function withdrawRealAsset(uint256 _tokenId)external allowAssets{
+        address ownerWill  = WillToken(willToken).ownerOf(willTokenId);
         require( msg.sender == ownerWill , "will token not active" );
         require(beneficiary != address(0)  && owner!=address(0),"address beneficiary or owner not correctly registered");
         RealToken(realToken).safeTransferFrom(owner, beneficiary, _tokenId);
@@ -105,12 +121,10 @@ contract Will {
 
     function withdrawBalance(
         address _tokenAddress,
-        uint256 _amount,
-        uint256 _willTokenId
+        uint256 _amount
     ) external allowAssets {
-        // check nft this tokenid 
-        // mint nft -> token , contract can mange token -> approve(spender , tokenid ) for erc 721 this contract
-        address ownerWill  = WillToken(willToken).ownerOf(_willTokenId);
+        address ownerWill  = WillToken(willToken).ownerOf(willTokenId);
+        // secure owner will 
         require( msg.sender == ownerWill , "will token not active" );
         IERC20MetaData token = IERC20MetaData(_tokenAddress);
         require(token.balanceOf(address(this)) >= _amount, "balance must be positive");
