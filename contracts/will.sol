@@ -55,9 +55,8 @@ contract Will {
         _;
     }
 
-    modifier onlyBeneficiary{
-        require(msg.sender == beneficiary , "you are not beneficiary");
-        _;
+    function getWillTokenId() public view returns(uint256){
+        return willTokenId;
     }
 
     function getBalance(address _tokenAddress) public view returns(uint256){
@@ -124,11 +123,11 @@ contract Will {
         uint256 _amount
     ) external allowAssets {
         address ownerWill  = WillToken(willToken).ownerOf(willTokenId);
-        // secure owner will 
         require( msg.sender == ownerWill , "will token not active" );
         IERC20MetaData token = IERC20MetaData(_tokenAddress);
         require(token.balanceOf(address(this)) >= _amount, "balance must be positive");
         token.transfer(beneficiary,_amount);
+        balance[_tokenAddress] = balance[_tokenAddress] - _amount;
         emit WithdrewBalance(_tokenAddress, address(this), beneficiary, _amount);
     }
 

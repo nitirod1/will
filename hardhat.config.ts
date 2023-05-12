@@ -3,6 +3,7 @@ import "dotenv/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomiclabs/hardhat-etherscan";
 import { Network, Alchemy } from 'alchemy-sdk';
+import 'solidity-coverage'
 
 // Template
 const {GOERLI_RPC, SEPOLIA_RPC, PRIVATE_KEY, ETHERSCAN_API } = process.env;
@@ -13,11 +14,15 @@ const config: HardhatUserConfig = {
       url: SEPOLIA_RPC || "",
       accounts: [PRIVATE_KEY as string],
     },
-    
+    goerli:{
+      url:GOERLI_RPC||"",
+      accounts:[PRIVATE_KEY as string]
+    }
   },
   etherscan: {
     apiKey: {
       sepolia: (ETHERSCAN_API as string) || "",
+      goerli:(ETHERSCAN_API as string) || "",
     },
   },
   solidity: {

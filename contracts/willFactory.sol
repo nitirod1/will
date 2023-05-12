@@ -4,14 +4,16 @@ pragma solidity 0.8.19;
 import "./WillToken.sol";
 import "./RealToken.sol";
 import "./Will.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract WillFactory {
+contract WillFactory is AccessControl{
     address internal CONTROLLER;
     address internal willTokenAddress;
     address internal realTokenAddress;
-    // ? uint256 tokenid , ? address (will)
-    // getTokenIdOfWill => will address , getTokenIdOnwer  => array of uint storage tokenid
-    // address(contract) = contract will ? if don't have i can เพิ่มเติมได้
+
+    bytes32 private constant Controller = keccak256("Controller");
+
+    mapping(uint256 => address) register;
     mapping(address => uint256[]) internal tokenIdOwner;
     mapping(uint256 => address) internal tokendIdOfWill;
 
@@ -19,16 +21,18 @@ contract WillFactory {
     event RegisterIdCard(address _owner, uint256 _idCard);
 
     constructor() {
-        CONTROLLER = msg.sender;
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(Controller, msg.sender);
     }
 
-    modifier onlyController{
-        require(msg.sender == CONTROLLER, "you are not controller ");
-        _;
+    function registerID(uint256 _id, address _to) external {
+        register[_id] = _to;
     }
-    // tokenid = address(will)
-    // mint will -> will 1 
-    // verify will ->
+
+    function getRegister(uint256 _id)public view returns(address){
+        return register[_id];
+    }
+
     function getTokendIdOfWill(uint256 _tokendId) public view returns(address) {
         return tokendIdOfWill[_tokendId];
     }
@@ -50,15 +54,7 @@ contract WillFactory {
         tokenIdOwner[msg.sender].push(tokenId);
     }
 
-    // multisig รับผลประโยชน์จาก will ต้องมี
-    // i want decenterized / real life i love but not enoght time to develop
-    // 2 ideas for
-    // verify เรื่อง offline จริง ๆ ที่เขาทำกัน 
-    // เอกสารราชการ
-    // มโน kyc offline
-    // worst case kyc offline
-
-    function claimWill(address _willContract , uint256 _tokenId )external{
+    function claimWill(address _willContract , uint256 _tokenId )external onlyRole(Controller){
         address beneficiary = Will(_willContract).getBeneficiary();
         address owner = Will(_willContract).getOwner();
         require(beneficiary != address(0)  && owner!=address(0),"address beneficiary or owner not correctly registered");
@@ -69,7 +65,7 @@ contract WillFactory {
         return realTokenAddress;
     }
 
-    function setRealTokenAddress(address _realTokenAddress) external onlyController{
+    function setRealTokenAddress(address _realTokenAddress) external onlyRole(DEFAULT_ADMIN_ROLE){
         realTokenAddress = _realTokenAddress;
     }
 
@@ -77,7 +73,7 @@ contract WillFactory {
         return willTokenAddress;
     }
 
-    function setwillTokenAddress(address _willTokenAddress) external onlyController{
+    function setwillTokenAddress(address _willTokenAddress) external onlyRole(DEFAULT_ADMIN_ROLE){
         willTokenAddress = _willTokenAddress;
     }
 }
