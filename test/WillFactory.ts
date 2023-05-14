@@ -35,6 +35,9 @@ describe("Test WillFactory", function () {
         const { willFactory , willToken , owner} = await loadFixture(deployTokenFixture);
         const createWill= await willFactory.createWill("test","test","testURI",)
         await createWill.wait();
+        const tokenIds = await willFactory.getTokenIdOnwer(owner.address);
+        const approveToken = await willToken.approve(willFactory.address,tokenIds[0]);
+        await approveToken.wait();
         expect(await willToken.ownerOf(0)).to.equal(owner.address)
     });
 
@@ -68,7 +71,7 @@ describe("Test WillFactory", function () {
     });
 
     it("test require claimWill beneficiary not set value",async function(){
-        const {willFactory,willToken,owner,beneficiary} = await loadFixture(deployTokenFixture);
+        const {willFactory,willToken,owner} = await loadFixture(deployTokenFixture);
         const createWill= await willFactory.createWill("test","test","testURI",)
         await createWill.wait();
         const tokenIds = await willFactory.getTokenIdOnwer(owner.address);

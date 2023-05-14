@@ -53,12 +53,14 @@ contract WillFactory is AccessControl{
         tokendIdOfWill[tokenId] = address(will);
         tokenIdOwner[msg.sender].push(tokenId);
     }
-
+  
     function claimWill(address _willContract , uint256 _tokenId )external onlyRole(Controller){
         address beneficiary = Will(_willContract).getBeneficiary();
         address owner = Will(_willContract).getOwner();
         require(beneficiary != address(0)  && owner!=address(0),"address beneficiary or owner not correctly registered");
         WillToken(willTokenAddress).safeTransferFrom(owner, beneficiary, _tokenId, "");
+        tokenIdOwner[beneficiary].push(_tokenId);
+        delete tokenIdOwner[owner];
     }
 
     function getRealTokenAddress()public view returns(address){
