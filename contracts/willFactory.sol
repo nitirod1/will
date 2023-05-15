@@ -53,6 +53,18 @@ contract WillFactory is AccessControl{
         tokendIdOfWill[tokenId] = address(will);
         tokenIdOwner[msg.sender].push(tokenId);
     }
+
+    function deleteWill(uint256 _tokenId) external {
+        require(WillToken(willTokenAddress).ownerOf(_tokenId) == msg.sender);
+        uint256 length = tokenIdOwner[msg.sender].length;
+        uint256[] memory temp = new uint256[](length);
+        for (uint i = 0; i < length; i++){
+            if(tokenIdOwner[msg.sender][i] != _tokenId){
+                temp[i] = tokenIdOwner[msg.sender][i];
+            }
+        }
+        delete tokendIdOfWill[_tokenId];
+    }
   
     function claimWill(address _willContract , uint256 _tokenId )external onlyRole(Controller){
         address beneficiary = Will(_willContract).getBeneficiary();
